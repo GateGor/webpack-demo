@@ -1,0 +1,16 @@
+body{
+    color: antiquewhite;
+    background-color: darkgray;
+}
+
+#pic{
+    background-image: url('../images/timg.jpg');
+    width: 1000px;
+    height: 500px;
+}
+
+#pic2{
+    background-image: url('../images/timg (3).jpg');
+    width: 1000px;
+    height: 500px;
+}
