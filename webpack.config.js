@@ -1,18 +1,38 @@
 const path = require('path');
+const glob = require('glob');
 const uglify = require('uglifyjs-webpack-plugin');//webpack集成
 const htmlPlugin = require('html-webpack-plugin');
 const extractTextPlugin = require('extract-text-webpack-plugin');
 const extractTextPluginCss = new extractTextPlugin('./css/index.css');
 const extractTextPluginLess = new extractTextPlugin('./css/black.css');
-let website = {
-    publicPath:'http://192.168.3.219:1616/'
+const PurifyCSSPlugin = require('purifycss-webpack');
+const entry = require('./webpack_config/entry_webpack.js');
+const webpack = require('webpack');
+const copyWebpackPlugin = require('copy-webpack-plugin');
+console.log(encodeURIComponent(process.env.type));
+
+if (process.env.type == "build") {
+    var website = {
+        publicPath: 'http://www.gategor.com/'
+    }
+} else {
+    var website = {
+        publicPath: 'http://192.168.3.219:1616/'
+    }
+    console.log(website.publicPath);
 }
+console.log(entry.path);
+
 module.exports = {
+    devtool:'eval-source-map',
     //入口文件的配置项
     entry:{
-        entry:'./src/entery.js',
+        // entry:'./src/entery.js',
+        entry:entry.path.entry,
+        jquery:'jquery',
+        vue:'vue',
         //多入口
-        entry2:'./src/entery2.js'
+        entry2:'./src/entry2.js'
     },
     //出口文件的配置项
     output:{
@@ -42,21 +62,21 @@ module.exports = {
                     ]
                 })
             },
-            {
-                test:/\.css$/,
-                use:[
-                    {
-                        loader:'style-loader'
-                    },{
-                        loader:'css-loader',
-                        options:{
-                            modules:true
-                        }
-                    },{
-                        loader:'postcss-loader'
-                    }
-                ]
-            },
+            // {
+            //     test:/\.css$/,
+            //     use:[
+            //         {
+            //             loader:'style-loader'
+            //         },{
+            //             loader:'css-loader',
+            //             options:{
+            //                 modules:true
+            //             }
+            //         },{
+            //             loader:'postcss-loader'
+            //         }
+            //     ]
+            // },
             {
                 test:/\.less$/,
                 // use:[
@@ -89,6 +109,17 @@ module.exports = {
             {
                 test:/\.(htm|html)$/i,
                 use:['html-withimg-loader']
+            },
+            {
+                test:/\.(jsx|js)$/,
+                use:{
+                    loader:'babel-loader',
+                    // options:{
+                    //     presets:['es2015','react']
+                    // }
+                },
+                //include/exclude:手动添加必须处理的文件（文件夹）或屏蔽不需要处理的文件（文件夹）（可选）
+                exclude:/node_modules/
             }
         ]
     },
@@ -107,6 +138,26 @@ module.exports = {
         }),
         extractTextPluginCss,
         extractTextPluginLess,
+        new PurifyCSSPlugin({
+            paths:glob.sync(path.join(__dirname,'src/*.html'))
+        }),
+        new webpack.ProvidePlugin({
+            $:'jquery'
+        }),
+        new webpack.BannerPlugin('zwj的webpack'),
+        new webpack.optimize.CommonsChunkPlugin({
+            //name对应入口文件中的名字，我们起的是jquery
+            name:['jquery','vue'],
+            //把文件打包到哪里，是一个路径
+            filename:'assets/js/[name].js',
+            //最小打包的文件模块数，这里直接写2就好
+            minChunks:2
+        }),
+        new copyWebpackPlugin([{
+            from:__dirname + '/src/public',
+            to:'./public'
+        }]),
+        new webpack.HotModuleReplacementPlugin()
     ],
     //配置webpack开发服务功能
     devServer:{
@@ -118,5 +169,13 @@ module.exports = {
         compress:true,
         //配置服务端口
         port:1616
+    },
+    watchOptions:{
+        //检查修改的时间，以毫秒为单位
+        poll:1000,
+        //防止重复保存而发生重复编译错误。这里设置的500是半秒内重复保存，不进行打包操作
+        aggregateTimeout:500,
+        //不监听的目录
+        ignored:/node_modules/
     }
 }

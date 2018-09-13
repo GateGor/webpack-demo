@@ -13,4 +13,8 @@ body{
     background-image: url('../images/timg (3).jpg');
     width: 1000px;
     height: 500px;
+    transform: rotate(45deg);
+}
+#test-purify-css-plugin{
+    color: aliceblue;
 }
